@@ -4,7 +4,7 @@ import { ElMessage } from 'element-plus'
 // 创建axios实例
 const service = axios.create({
   // 在开发环境使用localhost，在生产环境使用相对路径，由nginx代理
-  baseURL: import.meta.env.PROD ? '/api' : 'http://localhost:8080',
+  baseURL: import.meta.env.PROD ? '' : 'http://localhost:8080',
   timeout: 15000 // 请求超时时间
 })
 
