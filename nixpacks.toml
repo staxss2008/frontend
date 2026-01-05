@@ -8,6 +8,11 @@ cmds = ["nginx -g 'daemon off;'"]
 # 构建输出目录
 pubDir = "dist"
 
+# 环境变量
+[variables]
+# 后端服务URL（在Railway中会自动设置为后端服务的内部地址）
+BACKEND_URL = "http://backend-production-4428.up.railway.internal"
+
 # nginx配置
 [[static.config]]
 filePath = "/etc/nginx/nginx.conf"
