@@ -11,7 +11,7 @@ const routes = [
   {
     path: '/profile',
     name: 'Profile',
-    component: () => import('@/views/profile/Index.vue'),
+    component: () => import('@/views/profile/index.vue'),
     meta: { title: '个人信息' }
   },
   {
