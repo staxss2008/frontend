@@ -3,11 +3,11 @@ FROM node:16-alpine as build-stage
 
 WORKDIR /app
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
 # 复制源代码并构建
 COPY . .
-RUN npx vite build
+RUN npx --yes vite build
 
 # 使用nginx作为生产环境
 FROM nginx:alpine as production-stage
