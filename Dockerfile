@@ -7,7 +7,7 @@ RUN npm install
 
 # 复制源代码并构建
 COPY . .
-RUN npm run build
+RUN npx vite build
 
 # 使用nginx作为生产环境
 FROM nginx:alpine as production-stage
