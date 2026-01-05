@@ -1,0 +1,1 @@
+import{_ as t,o,c as _,a as s}from"./main-95657814.js";const n={name:"SystemUser"},a={class:"system-user"};function d(r,e,c,p,l,u){return o(),_("div",a,[...e[0]||(e[0]=[s("h2",null,"用户管理",-1),s("p",null,"系统用户管理页面",-1)])])}const m=t(n,[["render",d],["__scopeId","data-v-2db0dde1"]]);export{m as default};

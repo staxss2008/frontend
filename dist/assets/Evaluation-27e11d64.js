@@ -1,0 +1,1 @@
+import{_ as t,o,c as n,a}from"./main-95657814.js";const s={name:"DriverEvaluation"},_={class:"driver-evaluation"};function r(d,e,c,l,i,p){return o(),n("div",_,[...e[0]||(e[0]=[a("h2",null,"驾驶员评估",-1),a("p",null,"驾驶员评估管理页面",-1)])])}const v=t(s,[["render",r],["__scopeId","data-v-e9addaf5"]]);export{v as default};

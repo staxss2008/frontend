@@ -1,0 +1,1 @@
+import{_ as n,o as a,c as s,a as t}from"./main-95657814.js";const c={name:"StatisticsMaintenance"},o={class:"statistics-maintenance"};function _(i,e,r,p,d,l){return a(),s("div",o,[...e[0]||(e[0]=[t("h2",null,"维护统计",-1),t("p",null,"车辆维护情况统计页面",-1)])])}const u=n(c,[["render",_],["__scopeId","data-v-8386bcf0"]]);export{u as default};

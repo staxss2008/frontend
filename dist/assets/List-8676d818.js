@@ -1,0 +1,1 @@
+import{_ as s,o,c as a,a as t}from"./main-95657814.js";const n={name:"ApplicationList"},_={class:"application-list"};function c(p,e,i,l,r,d){return o(),a("div",_,[...e[0]||(e[0]=[t("h2",null,"申请列表",-1),t("p",null,"车辆使用申请列表页面",-1)])])}const u=s(n,[["render",c],["__scopeId","data-v-48158efb"]]);export{u as default};

@@ -1,0 +1,1 @@
+import{_ as t,o,c as _,a as s}from"./main-95657814.js";const n={name:"DriverList"},a={class:"driver-list"};function r(c,e,i,d,l,p){return o(),_("div",a,[...e[0]||(e[0]=[s("h2",null,"驾驶员列表",-1),s("p",null,"驾驶员管理列表页面",-1)])])}const f=t(n,[["render",r],["__scopeId","data-v-e682e0e8"]]);export{f as default};

@@ -1,0 +1,1 @@
+import{_ as t,o as c,c as o,a as s}from"./main-95657814.js";const _={name:"DispatchList"},a={class:"dispatch-list"};function n(p,e,i,r,d,l){return c(),o("div",a,[...e[0]||(e[0]=[s("h2",null,"调度列表",-1),s("p",null,"车辆调度列表页面",-1)])])}const f=t(_,[["render",n],["__scopeId","data-v-95cbcce3"]]);export{f as default};
