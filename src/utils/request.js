@@ -4,8 +4,8 @@ import { ElMessage } from 'element-plus'
 // 创建axios实例
 const service = axios.create({
   // 在开发环境使用空baseURL，让代理配置处理路径转换
-  // 在生产环境使用相对路径
-  baseURL: '',
+  // 在生产环境使用环境变量中配置的API基础URL
+  baseURL: import.meta.env.VITE_API_BASE_URL || '',
   timeout: 15000 // 请求超时时间
 })
 
