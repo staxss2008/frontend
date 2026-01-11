@@ -1,1 +1,0 @@
-import{_ as o,o as t,c as _,a as s}from"./main-95657814.js";const n={name:"SystemRole"},a={class:"system-role"};function c(l,e,r,d,p,u){return t(),_("div",a,[...e[0]||(e[0]=[s("h2",null,"角色管理",-1),s("p",null,"系统角色管理页面",-1)])])}const m=o(n,[["render",c],["__scopeId","data-v-bbdec789"]]);export{m as default};

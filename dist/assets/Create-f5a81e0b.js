@@ -1,1 +1,0 @@
-import{_ as a,o,c as s,a as t}from"./main-95657814.js";const c={name:"ApplicationCreate"},n={class:"application-create"};function _(r,e,p,d,l,i){return o(),s("div",n,[...e[0]||(e[0]=[t("h2",null,"创建申请",-1),t("p",null,"车辆使用申请创建页面",-1)])])}const f=a(c,[["render",_],["__scopeId","data-v-ae3254dc"]]);export{f as default};

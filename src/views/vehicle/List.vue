@@ -35,7 +35,7 @@
           <el-button 
             type="primary" 
             @click="handleEditSelected"
-            :disabled="!selectedRow"
+            :disabled="selectedRows.length === 0"
           >
             编辑
           </el-button>
@@ -58,11 +58,14 @@
       
       <!-- 表格 -->
       <el-table 
+        ref="tableRef"
         :data="vehicleList"
         @row-click="handleRowClick"
         :row-class-name="tableRowClassName" 
         v-loading="loading"
         style="width: 100%"
+        height="calc(80vh - 300px)"
+        :header-cell-style="{ background: '#f5f7fa', position: 'sticky', top: '0', zIndex: 10 }"
       >
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="plateNo" label="车牌号" width="120" />
@@ -167,6 +170,8 @@ const loading = ref(false)
 const vehicleList = ref([])
 const total = ref(0)
 const selectedRow = ref(null)
+const selectedRows = ref([])
+const lastSelectedIndex = ref(0)
 const dialogVisible = ref(false)
 const dialogTitle = ref('')
 const isEdit = ref(false)
@@ -205,6 +210,7 @@ const formRules = {
 
 // 表单引用
 const formRef = ref(null)
+const tableRef = ref(null)
 
 // 获取车辆列表
 const getList = async () => {
@@ -392,35 +398,81 @@ const getStatusText = (status) => {
 }
 
 // 处理行点击
-const handleRowClick = (row) => {
+const handleRowClick = (row, event) => {
+  const currentIndex = vehicleList.value.findIndex(item => item.id === row.id)
+
+  // 获取Shift键状态
+  const isShiftPressed = window.event && window.event.shiftKey
+
+  // 处理Shift键多选
+  if (isShiftPressed) {
+    const start = Math.min(lastSelectedIndex.value, currentIndex)
+    const end = Math.max(lastSelectedIndex.value, currentIndex)
+    // 选中范围内的所有行
+    const rowsToSelect = vehicleList.value.slice(start, end + 1)
+    selectedRows.value = rowsToSelect
+    selectedRow.value = row
+    lastSelectedIndex.value = currentIndex
+    return
+  }
+
+  // 普通点击，单选
+  selectedRows.value = [row]
   selectedRow.value = row
+  lastSelectedIndex.value = currentIndex
 }
 
 // 表格行样式
 const tableRowClassName = ({ row }) => {
-  return selectedRow.value && selectedRow.value.id === row.id ? 'selected-row' : ''
+  return selectedRows.value.some(item => item.id === row.id) ? 'selected-row' : ''
 }
 
 
 
 // 编辑选中的车辆
 const handleEditSelected = () => {
-  if (selectedRow.value) {
-    handleEdit(selectedRow.value)
+  if (selectedRows.value.length === 1) {
+    handleEdit(selectedRows.value[0])
+  } else if (selectedRows.value.length > 1) {
+    ElMessage.warning('请选择一条记录进行编辑')
   }
 }
 
 // 维修选中的车辆
 const handleMaintenanceSelected = () => {
-  if (selectedRow.value) {
-    handleUpdateStatus(selectedRow.value, 'MAINTENANCE')
+  if (selectedRows.value.length === 1) {
+    handleUpdateStatus(selectedRows.value[0], 'MAINTENANCE')
+  } else if (selectedRows.value.length > 1) {
+    ElMessage.warning('请选择一条记录进行维修')
   }
 }
 
 // 删除选中的车辆
-const handleDeleteSelected = () => {
-  if (selectedRow.value) {
-    handleDelete(selectedRow.value)
+const handleDeleteSelected = async () => {
+  if (selectedRows.value.length === 0) return
+
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除选中的 ${selectedRows.value.length} 条车辆记录吗？删除后将无法恢复。`,
+      '警告',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+
+    // 批量删除
+    await Promise.all(selectedRows.value.map(row => deleteVehicle(row.id)))
+    ElMessage.success('删除成功')
+    selectedRows.value = []
+    selectedRow.value = null
+    lastSelectedIndex.value = -1
+    getList()
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('删除失败')
+    }
   }
 }
 
@@ -435,10 +487,19 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 4px;
 }
 
 .vehicle-list .el-card {
   min-height: 80vh;
+}
+
+.vehicle-list :deep(.el-card__body) {
+  padding-top: 4px;
+}
+
+.vehicle-list :deep(.el-card__header) {
+  padding: 6px 16px;
 }
 
 .button-group {
@@ -453,5 +514,83 @@ onMounted(() => {
 
 .vehicle-list :deep(.selected-row) {
   background-color: #ecf5ff;
+}
+
+/* 固定表头 */
+.vehicle-list :deep(.el-table__header-wrapper) {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.vehicle-list :deep(.el-table__header th) {
+  background-color: #f5f7fa !important;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+/* 操作按钮悬浮 */
+.vehicle-list :deep(.el-form) {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: #fff;
+  padding: 4px 0;
+  margin-bottom: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.vehicle-list :deep(.el-form-item) {
+  margin-bottom: 4px;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .vehicle-list .el-card {
+    min-height: auto;
+  }
+
+  .vehicle-list :deep(.el-form) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .vehicle-list :deep(.el-form-item) {
+    width: 100%;
+    margin-right: 0;
+  }
+
+  .vehicle-list :deep(.el-form-item__content) {
+    width: 100%;
+  }
+
+  .vehicle-list :deep(.el-select),
+  .vehicle-list :deep(.el-input) {
+    width: 100%;
+  }
+
+  .vehicle-list :deep(.el-button-group) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .vehicle-list :deep(.el-button) {
+    flex: 1;
+    min-width: 80px;
+  }
+
+  .vehicle-list :deep(.el-table) {
+    font-size: 12px;
+  }
+
+  .vehicle-list :deep(.el-table__body-wrapper) {
+    overflow-x: auto;
+  }
+
+  .vehicle-list :deep(.el-table__cell) {
+    padding: 8px 4px;
+  }
 }
 </style>

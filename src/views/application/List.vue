@@ -63,6 +63,8 @@
         style="width: 100%"
         @row-click="handleRowClick"
         :row-class-name="tableRowClassName"
+        height="calc(80vh - 300px)"
+        :header-cell-style="{ background: '#f5f7fa', position: 'sticky', top: '0', zIndex: 10 }"
       >
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="status" label="状态" width="100">
@@ -217,6 +219,7 @@ import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
 import { getApplicationList, approveApplication, rejectApplication, getApplicationDetail, assignVehicle, getAvailableDrivers, getAvailableVehicles, completeApplication } from '@/api/application'
+import { getDispatchList } from '@/api/dispatch'
 
 const router = useRouter()
 
@@ -296,7 +299,10 @@ const handleCurrentChange = (val) => {
 
 // 新建申请
 const handleAdd = () => {
-  router.push('/application/create')
+  // 触发自定义事件，让Layout组件打开标签页
+  window.dispatchEvent(new CustomEvent('open-tab', {
+    detail: { path: '/application/create' }
+  }))
 }
 
 // 查看详情
@@ -381,7 +387,20 @@ const getVehicleListData = async () => {
 const getDriverListData = async () => {
   try {
     const response = await getAvailableDrivers()
-    driverList.value = response.data
+    // 获取调度列表，找出当前在途的驾驶员
+    const dispatchResponse = await getDispatchList()
+    const inProgressDriverIds = new Set()
+
+    if (dispatchResponse.data) {
+      dispatchResponse.data.forEach(dispatch => {
+        if (dispatch.status === 'IN_PROGRESS' && dispatch.driverId) {
+          inProgressDriverIds.add(dispatch.driverId)
+        }
+      })
+    }
+
+    // 过滤掉当前在途的驾驶员
+    driverList.value = response.data.filter(driver => !inProgressDriverIds.has(driver.id))
   } catch (error) {
     console.error(error)
     ElMessage.error('获取驾驶员列表失败')
@@ -515,6 +534,7 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 4px;
 }
 
 .action-buttons {
@@ -527,11 +547,97 @@ onMounted(() => {
   min-height: 80vh;
 }
 
+.application-list :deep(.el-card__body) {
+  padding-top: 4px;
+}
+
+.application-list :deep(.el-card__header) {
+  padding: 6px 16px;
+}
+
 .application-list :deep(.el-table) {
   cursor: pointer;
 }
 
 .application-list :deep(.selected-row) {
   background-color: #ecf5ff;
+}
+
+/* 固定表头 */
+.application-list :deep(.el-table__header-wrapper) {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.application-list :deep(.el-table__header th) {
+  background-color: #f5f7fa !important;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+/* 操作按钮悬浮 */
+.application-list :deep(.el-form) {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: #fff;
+  padding: 4px 0;
+  margin-bottom: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.application-list :deep(.el-form-item) {
+  margin-bottom: 4px;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .application-list .el-card {
+    min-height: auto;
+  }
+
+  .application-list :deep(.el-form) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .application-list :deep(.el-form-item) {
+    width: 100%;
+    margin-right: 0;
+  }
+
+  .application-list :deep(.el-form-item__content) {
+    width: 100%;
+  }
+
+  .application-list :deep(.el-select),
+  .application-list :deep(.el-input) {
+    width: 100%;
+  }
+
+  .application-list :deep(.el-button-group) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .application-list :deep(.el-button) {
+    flex: 1;
+    min-width: 80px;
+  }
+
+  .application-list :deep(.el-table) {
+    font-size: 12px;
+  }
+
+  .application-list :deep(.el-table__body-wrapper) {
+    overflow-x: auto;
+  }
+
+  .application-list :deep(.el-table__cell) {
+    padding: 8px 4px;
+  }
 }
 </style>

@@ -1,1 +1,0 @@
-import{_ as t,o as a,c as o,a as s}from"./main-95657814.js";const _={name:"StatisticsUsage"},n={class:"statistics-usage"};function c(r,e,p,d,i,l){return a(),o("div",n,[...e[0]||(e[0]=[s("h2",null,"使用统计",-1),s("p",null,"车辆使用情况统计页面",-1)])])}const f=t(_,[["render",c],["__scopeId","data-v-9e532e00"]]);export{f as default};

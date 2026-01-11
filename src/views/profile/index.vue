@@ -66,7 +66,7 @@
         </el-tab-pane>
 
         <!-- 用户管理标签页 -->
-        <el-tab-pane label="用户管理" name="user">
+        <el-tab-pane v-if="isAdminOrManager" label="用户管理" name="user">
           <div class="user-management">
             <div class="action-bar">
               <el-button type="primary" @click="handleAddUser">新增用户</el-button>
@@ -164,7 +164,7 @@
         </el-tab-pane>
 
         <!-- 角色管理标签页 -->
-        <el-tab-pane label="角色管理" name="role">
+        <el-tab-pane v-if="isAdminOrManager" label="角色管理" name="role">
           <div class="role-management">
             <div class="action-bar">
               <el-button type="primary" @click="handleAddRole">新增角色</el-button>
@@ -451,7 +451,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Edit, Lock, ArrowLeft } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
@@ -466,6 +466,11 @@ const router = useRouter()
 const activeTab = ref('basic')
 const userInfo = ref({})
 const roles = ref([])
+
+// 判断当前用户是否为管理员或经理
+const isAdminOrManager = computed(() => {
+  return roles.value.some(role => role.roleCode === 'ADMIN' || role.roleCode === 'MANAGER')
+})
 const editDialogVisible = ref(false)
 const passwordDialogVisible = ref(false)
 const editLoading = ref(false)
@@ -1040,9 +1045,13 @@ const handleRoleDialogClose = () => {
 // 初始化
 onMounted(async () => {
   await getUserInfo(true)
-  getUserListData()
-  getRoleListData()
-  getRolesData()
+  // 只有管理员和经理才能访问用户列表和角色列表
+  const isAdminOrManager = roles.value.some(role => role.roleCode === 'ADMIN' || role.roleCode === 'MANAGER')
+  if (isAdminOrManager) {
+    getUserListData()
+    getRoleListData()
+    getRolesData()
+  }
 })
 </script>
 

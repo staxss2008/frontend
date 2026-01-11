@@ -6,8 +6,8 @@
     <el-row :gutter="20" class="stats-row">
       <el-col :span="6">
         <el-card class="stat-card">
-          <div class="stat-item">
-            <div class="stat-icon" style="background-color: #409EFF;">
+          <div class="stat-item" style="background: linear-gradient(135deg, #409EFF 0%, #66b1ff 100%);">
+            <div class="stat-icon">
               <el-icon><Van /></el-icon>
             </div>
             <div class="stat-content">
@@ -19,8 +19,8 @@
       </el-col>
       <el-col :span="6">
         <el-card class="stat-card">
-          <div class="stat-item">
-            <div class="stat-icon" style="background-color: #67C23A;">
+          <div class="stat-item" style="background: linear-gradient(135deg, #67C23A 0%, #85ce61 100%);">
+            <div class="stat-icon">
               <el-icon><User /></el-icon>
             </div>
             <div class="stat-content">
@@ -32,8 +32,8 @@
       </el-col>
       <el-col :span="6">
         <el-card class="stat-card">
-          <div class="stat-item">
-            <div class="stat-icon" style="background-color: #E6A23C;">
+          <div class="stat-item" style="background: linear-gradient(135deg, #E6A23C 0%, #ebb563 100%);">
+            <div class="stat-icon">
               <el-icon><Document /></el-icon>
             </div>
             <div class="stat-content">
@@ -45,8 +45,8 @@
       </el-col>
       <el-col :span="6">
         <el-card class="stat-card">
-          <div class="stat-item">
-            <div class="stat-icon" style="background-color: #F56C6C;">
+          <div class="stat-item" style="background: linear-gradient(135deg, #F56C6C 0%, #f78989 100%);">
+            <div class="stat-icon">
               <el-icon><Position /></el-icon>
             </div>
             <div class="stat-content">
@@ -71,7 +71,7 @@
               <el-icon><Edit /></el-icon>
               申请用车
             </el-button>
-            <el-button type="success" @click="navigateTo('/vehicle/list')">
+            <el-button v-if="isAdminOrManager" type="success" @click="navigateTo('/vehicle/list')">
               <el-icon><Van /></el-icon>
               查看车辆
             </el-button>
@@ -79,7 +79,7 @@
               <el-icon><Odometer /></el-icon>
               实时监控
             </el-button>
-            <el-button type="danger" @click="navigateTo('/statistics/usage')">
+            <el-button v-if="isAdminOrManager" type="danger" @click="navigateTo('/statistics/usage')">
               <el-icon><TrendCharts /></el-icon>
               数据统计
             </el-button>
@@ -145,6 +145,16 @@ export default {
   name: 'DashboardIndex',
   setup() {
     const router = useRouter()
+
+    // 获取用户角色信息
+    const userInfoStr = localStorage.getItem('userInfo')
+    const userInfo = userInfoStr ? JSON.parse(userInfoStr) : {}
+    const userRoles = userInfo.roles || []
+
+    // 判断当前用户是否为管理员或经理
+    const isAdminOrManager = computed(() => {
+      return userRoles.some(role => role.roleCode === 'ADMIN' || role.roleCode === 'MANAGER')
+    })
     
     // 统计数据
     const vehicleCount = ref(0)
@@ -168,6 +178,8 @@ export default {
     
     // 路由跳转
     const navigateTo = (path) => {
+      // 触发自定义事件，通知Layout组件添加新标签页
+      window.dispatchEvent(new CustomEvent('open-tab', { detail: { path } }))
       router.push(path)
     }
     
@@ -248,7 +260,8 @@ export default {
       navigateTo,
       getStatusType,
       getStatusText,
-      getDispatchStatusType
+      getDispatchStatusType,
+      isAdminOrManager
     }
   }
 }
@@ -267,39 +280,81 @@ export default {
   margin-bottom: 20px;
 }
 
+.stat-card {
+  margin-bottom: 20px;
+}
+
 .stat-item {
   display: flex;
   align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  border-radius: 8px;
+  color: white;
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.2),
+    0 8px 24px rgba(0, 0, 0, 0.15),
+    inset 0 2px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.15),
+    inset 0 0 20px rgba(255, 255, 255, 0.1);
+  transform: translateY(0);
+  transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.25),
+    0 12px 32px rgba(0, 0, 0, 0.2),
+    inset 0 2px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.15),
+    inset 0 0 20px rgba(255, 255, 255, 0.15);
+}
+
+.stat-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.15) 0%, transparent 100%);
+  pointer-events: none;
 }
 
 .stat-icon {
+  position: absolute;
+  right: 0;
+  bottom: 0;
   width: 60px;
   height: 60px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 15px;
+  opacity: 0.2;
 }
 
 .stat-icon .el-icon {
-  font-size: 28px;
+  font-size: 40px;
   color: white;
 }
 
 .stat-content {
-  flex: 1;
+  text-align: left;
+  z-index: 1;
 }
 
 .stat-value {
-  font-size: 24px;
+  font-size: 18px;
   font-weight: bold;
-  margin-bottom: 5px;
+  margin-bottom: 2px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .stat-label {
-  color: #909399;
-  font-size: 14px;
+  font-size: 12px;
+  opacity: 0.9;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .quick-actions {
@@ -316,6 +371,33 @@ export default {
 .action-buttons .el-button {
   flex: 1;
   min-width: 120px;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-weight: 500;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    0 2px 6px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+  transform: translateY(0);
+  transition: all 0.3s ease;
+}
+
+.action-buttons .el-button:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.2),
+    0 4px 8px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+}
+
+.action-buttons .el-button:active {
+  transform: translateY(0);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
 }
 
 .card-header {

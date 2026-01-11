@@ -34,14 +34,14 @@
           <el-button 
             type="primary" 
             @click="handleEditSelected"
-            :disabled="!selectedRow"
+            :disabled="selectedRows.length === 0"
           >
             编辑
           </el-button>
           <el-button 
             type="danger" 
             @click="handleDeleteSelected"
-            :disabled="!selectedRow"
+            :disabled="selectedRows.length === 0"
           >
             删除
           </el-button>
@@ -50,11 +50,14 @@
 
       <!-- 表格 -->
       <el-table
+        ref="tableRef"
         :data="driverList"
         v-loading="loading"
         style="width: 100%"
         @row-click="handleRowClick"
         :row-class-name="tableRowClassName"
+        height="calc(80vh - 300px)"
+        :header-cell-style="{ background: '#f5f7fa', position: 'sticky', top: '0', zIndex: 10 }"
       >
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="name" label="姓名" width="100" />
@@ -153,6 +156,8 @@ const dialogVisible = ref(false)
 const dialogTitle = ref('')
 const isEdit = ref(false)
 const selectedRow = ref(null)
+const selectedRows = ref([])
+const lastSelectedIndex = ref(0)
 
 // 查询参数
 const queryParams = ref({
@@ -188,6 +193,7 @@ const formRules = {
 
 // 表单引用
 const formRef = ref(null)
+const tableRef = ref(null)
 
 // 获取驾驶员列表
 const getList = async () => {
@@ -348,26 +354,70 @@ const getStatusText = (status) => {
 }
 
 // 处理行点击
-const handleRowClick = (row) => {
+const handleRowClick = (row, event) => {
+  const currentIndex = driverList.value.findIndex(item => item.id === row.id)
+
+  // 获取Shift键状态
+  const isShiftPressed = window.event && window.event.shiftKey
+
+  // 处理Shift键多选
+  if (isShiftPressed) {
+    const start = Math.min(lastSelectedIndex.value, currentIndex)
+    const end = Math.max(lastSelectedIndex.value, currentIndex)
+    // 选中范围内的所有行
+    const rowsToSelect = driverList.value.slice(start, end + 1)
+    selectedRows.value = rowsToSelect
+    selectedRow.value = row
+    lastSelectedIndex.value = currentIndex
+    return
+  }
+
+  // 普通点击，单选
+  selectedRows.value = [row]
   selectedRow.value = row
+  lastSelectedIndex.value = currentIndex
 }
 
 // 表格行样式
 const tableRowClassName = ({ row }) => {
-  return selectedRow.value && selectedRow.value.id === row.id ? 'selected-row' : ''
+  return selectedRows.value.some(item => item.id === row.id) ? 'selected-row' : ''
 }
 
 // 编辑选中的驾驶员
 const handleEditSelected = () => {
-  if (selectedRow.value) {
-    handleEdit(selectedRow.value)
+  if (selectedRows.value.length === 1) {
+    handleEdit(selectedRows.value[0])
+  } else if (selectedRows.value.length > 1) {
+    ElMessage.warning('请选择一条记录进行编辑')
   }
 }
 
 // 删除选中的驾驶员
-const handleDeleteSelected = () => {
-  if (selectedRow.value) {
-    handleDelete(selectedRow.value)
+const handleDeleteSelected = async () => {
+  if (selectedRows.value.length === 0) return
+
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除选中的 ${selectedRows.value.length} 条驾驶员记录吗？`,
+      '警告',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+
+    // 批量删除
+    await Promise.all(selectedRows.value.map(row => deleteDriver(row.id)))
+    ElMessage.success('删除成功')
+    selectedRows.value = []
+    selectedRow.value = null
+    lastSelectedIndex.value = -1
+    getList()
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('删除失败')
+    }
   }
 }
 
@@ -382,10 +432,19 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 4px;
 }
 
 .driver-list .el-card {
   min-height: 80vh;
+}
+
+.driver-list :deep(.el-card__body) {
+  padding-top: 4px;
+}
+
+.driver-list :deep(.el-card__header) {
+  padding: 6px 16px;
 }
 
 .driver-list :deep(.el-table) {
@@ -394,5 +453,83 @@ onMounted(() => {
 
 .driver-list :deep(.selected-row) {
   background-color: #ecf5ff;
+}
+
+/* 固定表头 */
+.driver-list :deep(.el-table__header-wrapper) {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.driver-list :deep(.el-table__header th) {
+  background-color: #f5f7fa !important;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+/* 操作按钮悬浮 */
+.driver-list :deep(.el-form) {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: #fff;
+  padding: 4px 0;
+  margin-bottom: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.driver-list :deep(.el-form-item) {
+  margin-bottom: 4px;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .driver-list .el-card {
+    min-height: auto;
+  }
+
+  .driver-list :deep(.el-form) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .driver-list :deep(.el-form-item) {
+    width: 100%;
+    margin-right: 0;
+  }
+
+  .driver-list :deep(.el-form-item__content) {
+    width: 100%;
+  }
+
+  .driver-list :deep(.el-select),
+  .driver-list :deep(.el-input) {
+    width: 100%;
+  }
+
+  .driver-list :deep(.el-button-group) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .driver-list :deep(.el-button) {
+    flex: 1;
+    min-width: 80px;
+  }
+
+  .driver-list :deep(.el-table) {
+    font-size: 12px;
+  }
+
+  .driver-list :deep(.el-table__body-wrapper) {
+    overflow-x: auto;
+  }
+
+  .driver-list :deep(.el-table__cell) {
+    padding: 8px 4px;
+  }
 }
 </style>

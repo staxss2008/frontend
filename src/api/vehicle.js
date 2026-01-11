@@ -60,3 +60,13 @@ export function deleteVehicle(id) {
     method: 'delete'
   })
 }
+
+/**
+ * 获取车辆统计信息
+ */
+export function getVehicleStats() {
+  return request({
+    url: '/api/vehicle/stats',
+    method: 'get'
+  })
+}

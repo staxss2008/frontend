@@ -1,30 +1,6 @@
 import request from '@/utils/request'
 
 /**
- * 获取车辆统计信息
- */
-export function getVehicleStats() {
-  return request({
-    url: '/api/vehicle/stats',
-    method: 'get'
-  })
-}
-
-/**
- * 获取车辆列表
- */
-export function getVehicleList() {
-  return request({
-    url: '/api/vehicle/list',
-    method: 'get',
-    params: {
-      page: 1,
-      size: 100  // 获取全部车辆
-    }
-  })
-}
-
-/**
  * 获取实时位置
  */
 export function getRealTimeLocation() {
@@ -62,6 +38,44 @@ export function smartDispatch(data) {
 export function getMonitorData() {
   return request({
     url: '/api/dispatch/monitor-data',
+    method: 'get'
+  })
+}
+
+/**
+ * 更新开始里程（出车时填写）
+ */
+export function updateStartMileage(orderId, startMileage) {
+  return request({
+    url: '/api/dispatch/update-start-mileage',
+    method: 'post',
+    params: {
+      orderId,
+      startMileage
+    }
+  })
+}
+
+/**
+ * 更新结束里程（收车时填写）
+ */
+export function updateEndMileage(orderId, endMileage) {
+  return request({
+    url: '/api/dispatch/update-end-mileage',
+    method: 'post',
+    params: {
+      orderId,
+      endMileage
+    }
+  })
+}
+
+/**
+ * 获取调度列表
+ */
+export function getDispatchList() {
+  return request({
+    url: '/api/dispatch/list',
     method: 'get'
   })
 }

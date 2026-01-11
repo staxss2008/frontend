@@ -56,9 +56,48 @@
       </el-col>
     </el-row>
 
-    <!-- 地图展示区域 -->
+    <!-- 车辆状态列表 -->
     <el-row :gutter="20" class="main-row">
       <el-col :span="16">
+        <el-card class="status-card">
+          <template #header>
+            <span>车辆状态列表</span>
+          </template>
+          <el-table
+            :data="vehicleList"
+            height="500"
+            @row-click="handleVehicleClick"
+            v-loading="listLoading"
+          >
+            <el-table-column prop="plateNo" label="车牌号" width="100" />
+            <el-table-column prop="driverName" label="驾驶员" width="80" />
+            <el-table-column prop="status" label="状态" width="80">
+              <template #default="scope">
+                <el-tag :type="getStatusType(scope.row.status)" size="small">
+                  {{ getStatusText(scope.row.status) }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="currentLocation" label="当前位置" show-overflow-tooltip />
+            <el-table-column prop="taskInfo" label="任务信息" show-overflow-tooltip />
+            <el-table-column prop="lastUpdateTime" label="最后更新" width="100" />
+            <el-table-column label="操作" width="80">
+              <template #default="scope">
+                <el-button
+                  size="small"
+                  @click.stop="dispatchVehicle(scope.row)"
+                  :disabled="scope.row.status !== 'IDLE'"
+                >
+                  派车
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-card>
+      </el-col>
+      
+      <!-- 地图展示区域 -->
+      <el-col :span="8">
         <el-card class="map-card">
           <template #header>
             <div class="card-header">
@@ -74,42 +113,6 @@
           </div>
         </el-card>
       </el-col>
-      
-      <!-- 车辆状态列表 -->
-      <el-col :span="8">
-        <el-card class="status-card">
-          <template #header>
-            <span>车辆状态列表</span>
-          </template>
-          <el-table
-            :data="vehicleList"
-            height="400"
-            @row-click="handleVehicleClick"
-            v-loading="listLoading"
-          >
-            <el-table-column prop="plateNo" label="车牌号" />
-            <el-table-column prop="driverName" label="驾驶员" />
-            <el-table-column prop="status" label="状态">
-              <template #default="scope">
-                <el-tag :type="getStatusType(scope.row.status)">
-                  {{ getStatusText(scope.row.status) }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" width="80">
-              <template #default="scope">
-                <el-button
-                  size="small"
-                  @click.stop="dispatchVehicle(scope.row)"
-                  :disabled="scope.row.status !== 'IDLE'"
-                >
-                  派车
-                </el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-        </el-card>
-      </el-col>
     </el-row>
 
     <!-- 调度统计图表 -->
@@ -121,6 +124,58 @@
         <div id="dispatch-chart" style="width: 100%; height: 300px;"></div>
       </div>
     </el-card>
+
+    <!-- 派车对话框 -->
+    <el-dialog
+      v-model="dispatchDialogVisible"
+      title="派车任务"
+      width="500px"
+    >
+      <el-form :model="dispatchForm" label-width="100px">
+        <el-form-item label="车牌号">
+          <el-input v-model="dispatchForm.plateNo" disabled />
+        </el-form-item>
+        <el-form-item label="驾驶员">
+          <el-select v-model="dispatchForm.driverId" placeholder="请选择驾驶员" style="width: 100%">
+            <el-option
+              v-for="driver in driverList"
+              :key="driver.id"
+              :label="driver.name"
+              :value="driver.id"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="任务类型">
+          <el-select v-model="dispatchForm.taskType" placeholder="请选择任务类型">
+            <el-option label="公务用车" value="official" />
+            <el-option label="接送客户" value="pickup" />
+            <el-option label="货物运输" value="cargo" />
+            <el-option label="其他" value="other" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="出发地">
+          <el-input v-model="dispatchForm.startLocation" placeholder="请输入出发地" />
+        </el-form-item>
+        <el-form-item label="目的地">
+          <el-input v-model="dispatchForm.endLocation" placeholder="请输入目的地" />
+        </el-form-item>
+        <el-form-item label="预计里程">
+          <el-input-number v-model="dispatchForm.estimatedMileage" :min="0" />
+        </el-form-item>
+        <el-form-item label="预计用时">
+          <el-input-number v-model="dispatchForm.estimatedTime" :min="0" />
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="dispatchForm.remarks" type="textarea" :rows="3" placeholder="请输入备注信息" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="dispatchDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="submitDispatch">确认派车</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -128,7 +183,9 @@
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import * as echarts from 'echarts'
 import { ElMessage } from 'element-plus'
-import { getVehicleStats, getVehicleList, getRealTimeLocation } from '@/api/dispatch'
+import { getRealTimeLocation, createDispatchOrder, getDispatchList } from '@/api/dispatch'
+import { getVehicleStats, getVehicleList } from '@/api/vehicle'
+import { getAvailableDrivers } from '@/api/application'
 import { Van, CircleCheck, Position, Warning } from '@element-plus/icons-vue'
 
 defineOptions({
@@ -148,6 +205,49 @@ const mapLoading = ref(false)
 const listLoading = ref(false)
 const mapLoaded = ref(false)
 let chartInstance = null
+
+// 派车对话框相关
+const dispatchDialogVisible = ref(false)
+const dispatchForm = ref({
+  plateNo: '',
+  driverId: null,
+  driverName: '',
+  taskType: '',
+  startLocation: '',
+  endLocation: '',
+  estimatedMileage: 0,
+  estimatedTime: 0,
+  remarks: ''
+})
+
+// 驾驶员列表
+const driverList = ref([])
+
+// 获取驾驶员列表
+const getDriverListData = async () => {
+  try {
+    // 获取所有可用驾驶员
+    const response = await getAvailableDrivers()
+    // 获取调度列表，找出当前在途的驾驶员
+    const dispatchResponse = await getDispatchList()
+    const inProgressDriverIds = new Set()
+
+    if (dispatchResponse.data) {
+      dispatchResponse.data.forEach(dispatch => {
+        // 过滤出状态为IN_PROGRESS或PENDING的调度单
+        if ((dispatch.status === 'IN_PROGRESS' || dispatch.status === 'PENDING') && dispatch.driverId) {
+          inProgressDriverIds.add(dispatch.driverId)
+        }
+      })
+    }
+
+    // 过滤掉当前在途或待出车的驾驶员
+    driverList.value = response.data.filter(driver => !inProgressDriverIds.has(driver.id))
+  } catch (error) {
+    console.error('获取驾驶员列表失败:', error)
+    ElMessage.error('获取驾驶员列表失败')
+  }
+}
 
 // 状态类型映射
 const getStatusType = (status) => {
@@ -178,9 +278,97 @@ const handleVehicleClick = (row) => {
 }
 
 // 派车操作
-const dispatchVehicle = (row) => {
-  ElMessage.success(`已选择车辆 ${row.plateNo} 进行派车`)
-  // 这里可以添加派车逻辑
+const dispatchVehicle = async (row) => {
+  // 刷新驾驶员列表
+  await getDriverListData()
+  // 打开派车对话框并填充车辆信息
+  dispatchForm.value = {
+    plateNo: row.plateNo,
+    driverId: null,
+    driverName: row.driverName,
+    taskType: '',
+    startLocation: '',
+    endLocation: '',
+    estimatedMileage: 0,
+    estimatedTime: 0,
+    remarks: ''
+  }
+  dispatchDialogVisible.value = true
+}
+
+// 提交派车任务
+const submitDispatch = async () => {
+  // 验证表单
+  if (!dispatchForm.value.taskType) {
+    ElMessage.warning('请选择任务类型')
+    return
+  }
+  if (!dispatchForm.value.startLocation) {
+    ElMessage.warning('请输入出发地')
+    return
+  }
+  if (!dispatchForm.value.endLocation) {
+    ElMessage.warning('请输入目的地')
+    return
+  }
+  
+  try {
+    // 验证驾驶员是否已选择
+    if (!dispatchForm.value.driverId) {
+      ElMessage.warning('请选择驾驶员')
+      return
+    }
+
+    // 查找对应的车辆和驾驶员信息
+    const vehicle = vehicleList.value.find(v => v.plateNo === dispatchForm.value.plateNo)
+    if (!vehicle) {
+      ElMessage.error('未找到该车辆信息')
+      return
+    }
+
+    // 查找选中的驾驶员信息
+    const driver = driverList.value.find(d => d.id === dispatchForm.value.driverId)
+    if (!driver) {
+      ElMessage.error('未找到该驾驶员信息')
+      return
+    }
+
+    // 创建调度单
+    const dispatchData = {
+      applicationId: 0, // 如果没有申请单，使用0代替null
+      vehicleId: vehicle.id,
+      driverId: dispatchForm.value.driverId, // 使用表单中选择的驾驶员ID
+      plateNo: dispatchForm.value.plateNo,
+      driverName: dispatchForm.value.driverName,
+      taskType: dispatchForm.value.taskType,
+      startLocation: dispatchForm.value.startLocation,
+      endLocation: dispatchForm.value.endLocation,
+      estimatedMileage: dispatchForm.value.estimatedMileage,
+      estimatedTime: dispatchForm.value.estimatedTime,
+      remarks: dispatchForm.value.remarks
+    }
+    
+    await createDispatchOrder(dispatchData)
+    
+    // 更新车辆状态为使用中
+    vehicle.status = 'BUSY'
+    vehicle.driverName = driver.name
+    vehicle.currentLocation = dispatchForm.value.startLocation
+    vehicle.taskInfo = `${dispatchForm.value.startLocation} -> ${dispatchForm.value.endLocation}`
+    vehicle.lastUpdateTime = new Date().toLocaleTimeString()
+      
+    // 更新统计数据
+    stats.value.idleVehicles--
+    stats.value.busyVehicles++
+      
+    ElMessage.success(`派车成功！车辆 ${dispatchForm.value.plateNo} 已出发，调度单已创建`)
+    
+    // 关闭对话框
+    dispatchDialogVisible.value = false
+  } catch (error) {
+    console.error('创建调度单失败：', error)
+    ElMessage.error('创建调度单失败，请稍后重试')
+  }
 }
 
 // 刷新地图
@@ -206,9 +394,55 @@ const loadData = async () => {
     const monitorData = await getVehicleStats()
     stats.value = monitorData.data
 
+    // 获取调度列表
+    const dispatchData = await getDispatchList()
+    // 创建车辆ID到驾驶员信息的映射
+    const vehicleDriverMap = {}
+    if (dispatchData.data) {
+      dispatchData.data.forEach(dispatch => {
+        if (dispatch.vehicleId && dispatch.driver) {
+          vehicleDriverMap[dispatch.vehicleId] = dispatch.driver.name
+        }
+      })
+    }
+
     // 获取车辆列表
     const vehicles = await getVehicleList(1, 100)
-    vehicleList.value = vehicles.data.list
+    // 为车辆列表添加更多实时信息
+    vehicleList.value = vehicles.data.list.map(v => {
+      // 根据车辆状态生成不同的信息
+      let currentLocation = '未知'
+      let taskInfo = '无任务'
+      let lastUpdateTime = new Date().toLocaleTimeString()
+      let driverName = ''
+
+      // 从调度列表中获取驾驶员信息
+      if (vehicleDriverMap[v.id]) {
+        driverName = vehicleDriverMap[v.id]
+      }
+      
+      if (v.status === 'BUSY') {
+        currentLocation = v.currentLocation || '行驶中'
+        taskInfo = v.taskInfo || '执行任务中'
+      } else if (v.status === 'IDLE') {
+        currentLocation = v.currentLocation || '停车场'
+        taskInfo = '空闲'
+      } else if (v.status === 'OFFLINE') {
+        currentLocation = '未知'
+        taskInfo = '车辆离线'
+      } else if (v.status === 'MAINTENANCE') {
+        currentLocation = v.currentLocation || '维修厂'
+        taskInfo = v.taskInfo || '维修中'
+      }
+      
+      return {
+        ...v,
+        driverName,
+        currentLocation,
+        taskInfo,
+        lastUpdateTime
+      }
+    })
 
     // 获取实时位置
     const locations = await getRealTimeLocation()
@@ -352,9 +586,11 @@ onMounted(() => {
     initMap()
     initChart()
     loadData()
+    getDriverListData()
     // 每30秒刷新一次数据
     timer = setInterval(() => {
       loadData()
+      getDriverListData()
     }, 30000)
   })
 })

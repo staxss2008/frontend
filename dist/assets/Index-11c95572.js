@@ -1,1 +1,0 @@
-import{_ as o,o as a,c as n,a as s}from"./main-95657814.js";const t={name:"DashboardIndex"},_={class:"dashboard"};function d(c,e,r,p,l,u){return a(),n("div",_,[...e[0]||(e[0]=[s("h2",null,"仪表板",-1),s("p",null,"车辆管理系统仪表板",-1)])])}const x=o(t,[["render",d],["__scopeId","data-v-b7576b52"]]);export{x as default};

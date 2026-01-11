@@ -1,0 +1,62 @@
+
+/* 全局按钮3D立体效果 */
+.el-button {
+  border-radius: 8px !important;
+  padding: 12px 20px !important;
+  font-weight: 500 !important;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    0 2px 6px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1) !important;
+  transform: translateY(0) !important;
+  transition: all 0.3s ease !important;
+}
+
+.el-button:hover {
+  transform: translateY(-2px) !important;
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.2),
+    0 4px 8px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1) !important;
+}
+
+.el-button:active {
+  transform: translateY(0) !important;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1) !important;
+}
+
+/* 特殊处理小尺寸按钮 */
+.el-button--small {
+  padding: 8px 15px !important;
+}
+
+/* 特殊处理大尺寸按钮 */
+.el-button--large {
+  padding: 14px 24px !important;
+}
+
+/* 特殊处理文字按钮 */
+.el-button.is-text {
+  box-shadow: none !important;
+}
+
+/* 特殊处理链接按钮 */
+.el-button.is-link {
+  box-shadow: none !important;
+}
+
+/* 特殊处理圆形按钮 */
+.el-button.is-circle {
+  border-radius: 50% !important;
+  padding: 12px !important;
+}
+
+/* 特殊处理图标按钮 */
+.el-button.is-icon {
+  padding: 8px !important;
+}

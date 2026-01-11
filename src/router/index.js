@@ -64,12 +64,6 @@ const routes = [
         name: 'VehicleMaintenance',
         component: () => import('@/views/vehicle/Maintenance.vue'),
         meta: { title: '维修保养', icon: 'Tools' }
-      },
-      {
-        path: 'inspection',
-        name: 'VehicleInspection',
-        component: () => import('@/views/vehicle/Inspection.vue'),
-        meta: { title: '年检保险', icon: 'Memo' }
       }
     ]
   },
@@ -84,12 +78,6 @@ const routes = [
         name: 'DriverList',
         component: () => import('@/views/driver/List.vue'),
         meta: { title: '驾驶员档案', icon: 'List' }
-      },
-      {
-        path: 'evaluation',
-        name: 'DriverEvaluation',
-        component: () => import('@/views/driver/Evaluation.vue'),
-        meta: { title: '绩效考核', icon: 'ScaleToOriginal' }
       }
     ]
   },
