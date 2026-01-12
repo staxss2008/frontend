@@ -20,7 +20,7 @@ RUN chmod +x node_modules/.bin/vite
 RUN npm run build
 
 # 生产阶段
-FROM openresty/openresty:alpine
+FROM nginx:alpine
 
 # 复制自定义nginx配置
 COPY nginx.conf /etc/nginx/nginx.conf
