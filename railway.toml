@@ -8,3 +8,6 @@ restartPolicyType = "ON_FAILURE"
 
 [service]
 port = 8080
+
+[variables]
+BACKEND_URL = "https://backend-production-ed8f.up.railway.app"

@@ -7,3 +7,6 @@ cmds = ["npm ci", "npm run build"]
 
 [start]
 cmd = "npm run serve"
+
+[variables]
+BACKEND_URL = "https://backend-production-ed8f.up.railway.app"

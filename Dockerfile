@@ -31,5 +31,8 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 # 暴露端口
 EXPOSE 8080
 
+# 设置默认后端URL环境变量
+ENV BACKEND_URL=https://backend-production-ed8f.up.railway.app
+
 # 启动nginx
 CMD ["nginx", "-g", "daemon off;"]
